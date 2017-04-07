@@ -6,19 +6,8 @@
 
 struct termios orig_termios;
 
-void disableRawMode() {
-    tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios);
-}
-
-void enableRawMode() {
-    tcgetattr(STDIN_FILENO, &orig_termios);
-    atexit(disableRawMode);
-
-    struct termios raw = orig_termios;
-    raw.c_lflag &= ~(ECHO | ICANON | ISIG);
-
-    tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
-}
+void enableRawMode();
+void disableRawMode();
 
 int main() {
     enableRawMode();
@@ -34,4 +23,18 @@ int main() {
     }
         
     return 0;
+}
+
+void enableRawMode() {
+    tcgetattr(STDIN_FILENO, &orig_termios); // Get terminal flags
+    atexit(disableRawMode); // Reset flags at program exit
+
+    struct termios raw = orig_termios; // Copy flags
+    raw.c_lflag &= ~(ECHO | ICANON | ISIG); // Disable echo, canonical mode, ctrl-c, and ctrl-z signals
+
+    tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw); // Apply terminal flags
+}
+
+void disableRawMode() {
+    tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios); // Reset original flags
 }
